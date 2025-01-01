@@ -38,3 +38,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+#venv
+python_model/venv/
+python_model/env/
+python_model/chemml_env/
