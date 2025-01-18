@@ -62,8 +62,26 @@ loaded_MLP.model
 # Make predictions on the test data using the loaded MLP model.
 # The predictions are in the standardized form, so they need to be inverse transformed.
 import numpy as np
+import pandas as pd
 y_pred = loaded_MLP.predict(X_test)
 y_pred = yscale.inverse_transform(y_pred.reshape(-1,1))  # Reshape and inverse transform to get original scale.
+
+# Convert test and predicted values to a readable format
+actual_values = y_test.reshape(-1,)  # Flatten the actual values
+predicted_values = y_pred.reshape(-1,)  # Flatten the predicted values
+
+# Combine molecule data, actual values, and predicted values into a DataFrame
+results_df = pd.DataFrame({
+    "Molecule": molecules['smiles'][len(X_train):].values,  # Extract SMILES strings
+    "Actual Density": actual_values,
+    "Predicted Density": predicted_values
+})
+
+# Display the DataFrame for inspection
+print(results_df)
+
+# Save the DataFrame to a CSV file for further analysis if needed
+results_df.to_csv("molecule_predictions.csv", index=False)
 
 # Calculate regression performance metrics to evaluate the model's predictions.
 from chemml.utils import regression_metrics
