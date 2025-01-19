@@ -1,173 +1,228 @@
 import React, { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { OrbitControls } from "three/examples/jsm/Addons.js";
 
 // Define color mapping for common elements
-const elementColors = {
-  1: 0xffffff, // H - White
-  6: 0x808080, // C - Grey
-  7: 0x0000ff, // N - Blue
-  8: 0xff0000, // O - Red
-  9: 0x90ee90, // F - Light green
-  11: 0x800080, // Na - Purple
-  15: 0xffa500, // P - Orange
-  16: 0xffff00, // S - Yellow
-  17: 0x00ff00, // Cl - Green
-  35: 0x8b0000, // Br - Dark red
-  53: 0x4b0082, // I - Indigo
+const elementColors: { [key: number]: string } = {
+  1: "#FFFFFF", // H - White
+  6: "#808080", // C - Gray
+  7: "#0000FF", // N - Blue
+  8: "#FF0000", // O - Red
+  9: "#00FF00", // F - Green
+  15: "#FFA500", // P - Orange
+  16: "#FFFF00", // S - Yellow
+  17: "#00FF00", // Cl - Green
+  35: "#A52A2A", // Br - Brown
+  53: "#800080", // I - Purple
 };
 
-// Define atomic radii (in Angstroms)
-const atomicRadii = {
-  1: 0.25, // H
-  6: 0.7, // C
-  7: 0.65, // N
-  8: 0.6, // O
-  9: 0.5, // F
-  11: 1.8, // Na
-  15: 1.0, // P
-  16: 1.0, // S
-  17: 1.0, // Cl
-  35: 1.15, // Br
-  53: 1.4, // I
-};
+interface Atom {
+  id: number;
+  element: number;
+  x: number;
+  y: number;
+  z: number;
+}
 
-const MoleculeViewer = ({ moleculeData }: any) => {
-  const mountRef = useRef(null);
+interface Bond {
+  aid1: number;
+  aid2: number;
+  order: number;
+}
+
+interface MoleculeData {
+  atoms: Atom[];
+  bonds: Bond[];
+}
+
+interface MoleculeViewerProps {
+  moleculeData: MoleculeData;
+}
+
+export default React.memo(function MoleculeViewer({
+  moleculeData,
+}: MoleculeViewerProps) {
+  console.log("MoleculeViewer rendering with data:", moleculeData);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mountRef = useRef(false);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const controlsRef = useRef<OrbitControls | null>(null);
 
   useEffect(() => {
-    if (!moleculeData || !moleculeData[0]) return;
+    // set up Three.js only once
+    if (mountRef.current) return;
+    mountRef.current = true;
 
-    // Scene setup
+    if (!containerRef.current) return;
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
+    sceneRef.current = scene;
 
-    // Camera setup
     const camera = new THREE.PerspectiveCamera(
       75,
-      window.innerWidth / window.innerHeight,
+      containerRef.current.clientWidth / containerRef.current.clientHeight,
       0.1,
       1000
     );
-    camera.position.z = 5;
+    camera.position.set(0, 0, 15);
+    cameraRef.current = camera;
 
-    // Renderer setup
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    mountRef.current.appendChild(renderer.domElement);
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+    });
 
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
-    directionalLight.position.set(0, 1, 1);
-    scene.add(directionalLight);
+    const width = containerRef.current.clientWidth || 800;
+    const height = containerRef.current.clientHeight || 600;
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    containerRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controlsRef.current = controls;
 
-    const molecule = moleculeData[0];
-    const { atoms, bonds } = molecule;
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambientLight);
 
-    const atomGroup = new THREE.Group();
-    atoms.aid.forEach((id, index) => {
-      const element = atoms.element[index];
-      const radius = atomicRadii[element] || 0.5; //WTF? change to use data from API
-      const color = elementColors[element] || 0x808080; //same if possible
+    const pointLight = new THREE.PointLight(0xffffff, 1.5);
+    pointLight.position.set(10, 10, 10);
+    scene.add(pointLight);
 
-      const geometry = new THREE.SphereGeometry(radius, 32, 32);
-      const material = new THREE.MeshPhongMaterial({
-        color: color,
-        shininess: 100,
-        specular: 0x444444,
-      });
-      const sphere = new THREE.Mesh(geometry, material);
-
-      // I need to get actual coordinates from my data??
-      sphere.position.set((index - atoms.aid.length / 2) * 2, 0, 0);
-
-      atomGroup.add(sphere);
-    });
-    scene.add(atomGroup);
-
-    // Add bonds
-    if (bonds && bonds.aid1) {
-      bonds.aid1.forEach((aid1, index) => {
-        const aid2 = bonds.aid2[index];
-        const order = bonds.order[index];
-
-        // Find positions of connected atoms
-        const atom1Index = atoms.aid.indexOf(aid1);
-        const atom2Index = atoms.aid.indexOf(aid2);
-
-        if (atom1Index !== -1 && atom2Index !== -1) {
-          const pos1 = atomGroup.children[atom1Index].position;
-          const pos2 = atomGroup.children[atom2Index].position;
-
-          // Create bond cylinder
-          const bondMaterial = new THREE.MeshPhongMaterial({
-            color: 0xcccccc,
-            shininess: 100,
-          });
-
-          const distance = pos1.distanceTo(pos2);
-          const bondGeometry = new THREE.CylinderGeometry(
-            0.1,
-            0.1,
-            distance,
-            8
-          );
-          const bond = new THREE.Mesh(bondGeometry, bondMaterial);
-
-          // Position bond between atoms
-          const midpoint = new THREE.Vector3()
-            .addVectors(pos1, pos2)
-            .multiplyScalar(0.5);
-          bond.position.copy(midpoint);
-          bond.lookAt(pos2);
-          bond.rotateX(Math.PI / 2);
-
-          scene.add(bond);
-        }
-      });
-    }
-
-    // Center camera on molecule
-    const box = new THREE.Box3().setFromObject(atomGroup);
-    const center = box.getCenter(new THREE.Vector3());
-    atomGroup.position.sub(center);
-
-    // Adjust camera distance based on molecule size
-    const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
-    camera.position.z = maxDim * 3;
-
-    // Animation loop
     const animate = () => {
       requestAnimationFrame(animate);
       controls.update();
       renderer.render(scene, camera);
     };
+
     animate();
 
-    // Handle window resize
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener("resize", handleResize);
-
-    // Cleanup
     return () => {
-      window.removeEventListener("resize", handleResize);
-      mountRef.current?.removeChild(renderer.domElement);
-      renderer.dispose();
+      console.log("Cleaning up...");
+      if (rendererRef.current) {
+        rendererRef.current.dispose();
+        containerRef.current?.removeChild(rendererRef.current.domElement);
+      }
     };
+  }, []);
+
+  useEffect(() => {
+    if (!sceneRef.current || !moleculeData) {
+      console.log("No scene or molecule data available");
+      return;
+    }
+
+    // actually clear previous objects in the scene
+    const objectsToRemove: any = [];
+    sceneRef.current.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        objectsToRemove.push(object);
+        console.log(objectsToRemove);
+      }
+    });
+    objectsToRemove.forEach((object: any) => sceneRef.current?.remove(object));
+
+    const atomGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+    moleculeData.atoms.forEach((atom) => {
+      const material = new THREE.MeshPhongMaterial({
+        color: elementColors[atom.element] || "#808080",
+        shininess: 100,
+      });
+      const sphere = new THREE.Mesh(atomGeometry, material);
+      sphere.position.set(atom.x, atom.y, atom.z);
+      sceneRef.current?.add(sphere);
+      console.log(`Added atom at position:`, {
+        x: atom.x,
+        y: atom.y,
+        z: atom.z,
+      });
+    });
+
+    moleculeData.bonds.forEach((bond) => {
+      const atom1 = moleculeData.atoms[bond.aid1];
+      const atom2 = moleculeData.atoms[bond.aid2];
+
+      const start = new THREE.Vector3(atom1.x, atom1.y, atom1.z);
+      const end = new THREE.Vector3(atom2.x, atom2.y, atom2.z);
+
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+
+      const cylinderGeometry = new THREE.CylinderGeometry(0.1, 0.1, length, 12);
+      const material = new THREE.MeshPhongMaterial({
+        color: 0xcccccc,
+        shininess: 100,
+      });
+      const cylinder = new THREE.Mesh(cylinderGeometry, material);
+
+      cylinder.position.copy(start);
+      cylinder.position.lerp(end, 0.5);
+      cylinder.lookAt(end);
+      cylinder.rotateX(Math.PI / 2);
+
+      sceneRef.current?.add(cylinder);
+      console.log(`Added bond between atoms:`, { start: start, end: end });
+    });
+
+    if (cameraRef.current && moleculeData.atoms.length > 0) {
+      const center = new THREE.Vector3();
+      moleculeData.atoms.forEach((atom) => {
+        center.add(new THREE.Vector3(atom.x, atom.y, atom.z));
+      });
+      center.divideScalar(moleculeData.atoms.length);
+
+      if (controlsRef.current) {
+        controlsRef.current.target.copy(center);
+        controlsRef.current.update();
+      }
+
+      const maxDistance = moleculeData.atoms.reduce((max, atom) => {
+        const distance = new THREE.Vector3(atom.x, atom.y, atom.z).distanceTo(
+          center
+        );
+        return Math.max(max, distance);
+      }, 0);
+
+      cameraRef.current.position.copy(center);
+      cameraRef.current.position.z += Math.max(10, maxDistance * 2);
+      cameraRef.current.lookAt(center);
+    }
   }, [moleculeData]);
 
-  return <div ref={mountRef} className="w-full h-screen" />;
-};
+  useEffect(() => {
+    const handleResize = () => {
+      if (!containerRef.current || !cameraRef.current || !rendererRef.current)
+        return;
 
-export default MoleculeViewer;
+      const width = containerRef.current.clientWidth;
+      const height = containerRef.current.clientHeight;
+
+      console.log("Resizing to:", { width, height });
+
+      cameraRef.current.aspect = width / height;
+      cameraRef.current.updateProjectionMatrix();
+      rendererRef.current.setSize(width, height);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className="w-full h-full"
+      style={{
+        minHeight: "500px",
+        height: "100%",
+        width: "100%",
+        position: "absolute",
+      }}
+    />
+  );
+});
