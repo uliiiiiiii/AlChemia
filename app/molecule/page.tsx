@@ -34,7 +34,7 @@ const MoleculePage: React.FC = () => {
           <input
             type="text"
             className={styles.inputField}
-            placeholder="Enter molecule name (e.g., NaCl)"
+            placeholder="Enter SMILES string (e.g. O)"
             value={moleculeName}
             onChange={(e) => setMoleculeName(e.target.value)}
           />

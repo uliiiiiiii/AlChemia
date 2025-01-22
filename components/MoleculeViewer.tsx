@@ -85,6 +85,8 @@ export default React.memo(function MoleculeViewer({
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controls.minDistance = 5;
+    controls.maxDistance = 20;
     controlsRef.current = controls;
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -129,10 +131,19 @@ export default React.memo(function MoleculeViewer({
 
     const atomGeometry = new THREE.SphereGeometry(0.4, 32, 32);
     moleculeData.atoms.forEach((atom) => {
-      const material = new THREE.MeshPhongMaterial({
+      const material = new THREE.MeshStandardMaterial({
         color: elementColors[atom.element] || "#808080",
-        shininess: 100,
+        metalness: 0.5,
+        roughness: 0.2,
       });
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.05);
+      sceneRef.current?.add(ambientLight);
+
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.05);
+      directionalLight.position.set(5, 5, 5);
+      sceneRef.current?.add(directionalLight);
+
       const sphere = new THREE.Mesh(atomGeometry, material);
       sphere.position.set(atom.x, atom.y, atom.z);
       sceneRef.current?.add(sphere);
