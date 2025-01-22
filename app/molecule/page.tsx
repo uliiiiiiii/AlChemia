@@ -14,9 +14,7 @@ const MoleculePage: React.FC = () => {
     setMoleculeData(null);
 
     try {
-      const response = await fetch(
-        `http://localhost:8000/api/fetchMolecule?smiles=${moleculeName}`
-      );
+      const response = await fetch(`/api/fetchMolecule?smiles=${moleculeName}`);
       const data = await response.json();
       if (response.ok) {
         setMoleculeData(data);
