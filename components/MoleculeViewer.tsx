@@ -5,17 +5,37 @@ import { OrbitControls } from "three/examples/jsm/Addons.js";
 // Define color mapping for common elements
 const elementColors: { [key: number]: string } = {
   1: "#FFFFFF", // H - White
-  6: "#808080", // C - Gray
+  6: "#5A5A5A", // C - Black
   7: "#0000FF", // N - Blue
   8: "#FF0000", // O - Red
   9: "#00FF00", // F - Green
+  17: "#00FF00", // Cl - Green
+  35: "#8B0000", // Br - Dark Red
+  53: "#800080", // I - Dark Violet
+  2: "#00FFFF", // He - Cyan
+  10: "#00FFFF", // Ne - Cyan
+  18: "#00FFFF", // Ar - Cyan
+  36: "#00FFFF", // Kr - Cyan
+  54: "#00FFFF", // Xe - Cyan
+  86: "#00FFFF", // Rn - Cyan
   15: "#FFA500", // P - Orange
   16: "#FFFF00", // S - Yellow
-  17: "#00FF00", // Cl - Green
-  35: "#A52A2A", // Br - Brown
-  53: "#800080", // I - Purple
+  5: "#C0C0C0", // B - Beige
+  3: "#800080", // Li - Violet
+  11: "#800080", // Na - Violet
+  19: "#800080", // K - Violet
+  37: "#800080", // Rb - Violet
+  55: "#800080", // Cs - Violet
+  87: "#800080", // Fr - Violet
+  4: "#008000", // Be - Dark Green
+  12: "#008000", // Mg - Dark Green
+  20: "#008000", // Ca - Dark Green
+  38: "#008000", // Sr - Dark Green
+  56: "#008000", // Ba - Dark Green
+  88: "#008000", // Ra - Dark Green
+  22: "#808080", // Ti - Grey
+  26: "#FF8C00", // Fe - Dark Orange
 };
-
 interface Atom {
   id: number;
   element: number;
@@ -132,7 +152,7 @@ export default React.memo(function MoleculeViewer({
     const atomGeometry = new THREE.SphereGeometry(0.4, 32, 32);
     moleculeData.atoms.forEach((atom) => {
       const material = new THREE.MeshStandardMaterial({
-        color: elementColors[atom.element] || "#808080",
+        color: elementColors[atom.element] || "#FFC0CB",
         metalness: 0.5,
         roughness: 0.2,
       });
