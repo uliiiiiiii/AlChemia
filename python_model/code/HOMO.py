@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 from chemml.visualization import scatter2D, SavePlot, decorator
+import joblib
 
 def calculate_descriptors(smiles):
     mol = Chem.MolFromSmiles(smiles)
@@ -78,20 +79,8 @@ test_results = pd.DataFrame({
     'Predicted_HOMO_eV': y_pred_test
 })
 
-test_results.to_csv('./results/HOMO.csv', index=False)
-
-# # Parity plot code:
-# plt.figure(figsize=(8, 6))
-# plt.scatter(y_test, y_pred_test, color='blue', label='Predictions')
-# plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--', label='Perfect Prediction (y = x)')
-# plt.xlabel('Actual HOMO Energy (eV)')
-# plt.ylabel('Predicted HOMO Energy (eV)')
-# plt.title('Parity Plot: Actual vs. Predicted HOMO Energy')
-# plt.legend()
-# plt.grid(True)
-# plt.tight_layout()
-# plt.savefig('./images/HOMO_parity_plot.png')  # Save plot as a PNG file
-# plt.show()
+test_results.to_csv('../results/HOMO.csv', index=False)
+joblib.dump(model, '../trained_models/HOMO_model.pkl')
 
 # Prepare data for visualization
 visualization_df = pd.DataFrame({
