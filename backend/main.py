@@ -62,30 +62,30 @@ def generate_3d_coordinates(smiles: str):
 @app.get("/api/fetchMolecule")
 async def predict_density(smiles: str):
     try:
-        # # Feature extraction and prediction
-        # features = convert_smiles_to_features(smiles)
-        # scaled_features = x_scaler.transform([features])
-        # scaled_prediction = model.predict(scaled_features)
-        # predicted_density = y_scaler.inverse_transform(scaled_prediction)[0][0]
+        # Feature extraction and prediction
+        features = convert_smiles_to_features(smiles)
+        scaled_features = x_scaler.transform([features])
+        scaled_prediction = model.predict(scaled_features)
+        predicted_density = y_scaler.inverse_transform(scaled_prediction)[0][0]
 
-        # # Fetch actual density
+        # Fetch actual density
         # actual_density = fetch_actual_density(smiles)
 
         # Generate 3D coordinates
         molecule_data = generate_3d_coordinates(smiles)
 
-        # return {
-        #     "smiles": smiles,
-        #     "predicted_density": predicted_density,
-        #     "actual_density": actual_density,
-        #     "molecule_data": molecule_data
-        # }
         return {
             "smiles": smiles,
-            "predicted_density": 1203,
-            "actual_density": 204,
+            "predicted_density": predicted_density,
+            "actual_density": 69,
             "molecule_data": molecule_data
         }
+        # return {
+        #     "smiles": smiles,
+        #     "predicted_density": 1203,
+        #     "actual_density": 204,
+        #     "molecule_data": molecule_data
+        # }
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
 
