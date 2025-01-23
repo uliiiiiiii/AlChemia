@@ -43,7 +43,7 @@ const MoleculePage: React.FC = () => {
           </button>
         </div>
         {error && <p className="text-red-500 mt-2">{error}</p>}
-        <div className={styles.moleculeInfo}>
+        {/* <div className={styles.moleculeInfo}>
           <p>
             <b>Some properties</b> (actual/predicted by model)
           </p>
@@ -66,7 +66,7 @@ const MoleculePage: React.FC = () => {
           <p>
             <b>HOMO: </b>
           </p>
-        </div>
+        </div> */}
       </div>
       {moleculeData && (
         <MoleculeViewer moleculeData={moleculeData.molecule_data} />
