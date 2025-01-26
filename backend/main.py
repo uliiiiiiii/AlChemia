@@ -45,16 +45,8 @@ async def predict_density(smiles: str):
 
         return {
             "smiles": smiles,
-            # "predicted_density": predicted_density,
-            "actual_density": 69,
             "molecule_data": molecule_data
         }
-        # return {
-        #     "smiles": smiles,
-        #     "predicted_density": 1203,
-        #     "actual_density": 204,
-        #     "molecule_data": molecule_data
-        # }
     except Exception as e:
         return JSONResponse(status_code=400, content={"error": str(e)})
 
